@@ -1,14 +1,14 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Hardhat backend for the krabidEx smart contracts and tests.",
   "main": "index.js",
   "scripts": {
     "test": "hardhat test"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "kablimaVector",
+  "license": "MIT",
   "type": "module",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.3",

@@ -2,50 +2,94 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Status](https://img.shields.io/badge/status-pre--alpha-orange)
-![Solidity](https://img.shields.io/badge/Solidity-0.8.x-363636)
-![Hardhat](https://img.shields.io/badge/Hardhat-local-F7DF1E?logo=ethereum&logoColor=000)
+![Solidity](https://img.shields.io/badge/Solidity-0.8.28-363636)
+![Hardhat](https://img.shields.io/badge/Hardhat-3-F7DF1E?logo=ethereum&logoColor=000)
 
-Experimental decentralized exchange (dEX) scaffold powered by **Hardhat + Ignition (ethers v6)** and **Solidity 0.8.x**.
+A decentralized exchange project being built in public, starting from the smart-contract backend first.
 
-> Current focus: backend / smart-contract foundation first.  
-> Frontend and public testnet deployment come later.
+The current priority: build the core contracts, test them properly, and turn the repo into a real portfolio-grade dEX step by step.
 
 ---
 
-## Status
+## Current Status
 
-This repository is currently in an **early public build** stage.
+This repository is no longer just a scaffold.
 
-Implemented / present now:
+### Current backend checkpoint
 
-- Git repository initialized
-- Backend Node setup started
-- Hardhat-based workflow in progress
-- Public repo structure being prepared
+- Hardhat 3 initialized inside `backend/`
+- Solidity configured to `0.8.28`
+- OpenZeppelin contracts installed
+- ERC-20 `Token.sol` implemented
+- Core `Exchange.sol` implemented with deposit / withdraw logic
+- JavaScript tests for both `Token` and `Exchange`
+- `npx hardhat test` / `npm test` workflow active
 
-Planned next:
+There is **no frontend, no public testnet deployment, no live trading flow, and no audit** yet.
 
-- ERC-20 token contracts
-- Exchange core contract
-- Unit tests
-- Ignition deployment modules
-- Frontend integration
+---
+
+## Implemented Now
+
+
+### Token and Exchange contracts
+
+`Token.sol` is a basic ERC-20 token built with OpenZeppelin.
+
+
+### Exchange contract
+
+`Exchange.sol` currently includes:
+
+- `feeAccount`
+- `feePercent`
+- `mapping(address => mapping(address => uint256)) public tokens`
+- `depositToken(token, amount)`
+- `withdrawToken(token, amount)`
+- `Deposit` and `Withdraw` events
+
+Important honesty point:
+
+- `feeAccount` and `feePercent` are already stored in the contract
+- fee-charging logic is **not applied yet** in deposit / withdraw or trading flows
+
+---
+
+## Tests Present
+
+### Token tests
+
+Current coverage includes:
+
+- total supply assigned to deployer
+- correct token name and symbol
+- token transfers between accounts
+
+### Exchange tests
+
+Current coverage includes:
+
+- tracks `feeAccount`
+- tracks `feePercent`
+- deposit updates internal balance
+- exchange actually receives tokens
+- withdraw updates internal balance
+- cannot withdraw more than deposited
 
 ---
 
 ## Tech Stack
 
-- **Solidity 0.8.x**
-- **Node.js 20.x**
-- **Hardhat**
-- **Hardhat Ignition**
-- **ethers v6**
-- **Mocha / Chai**
-- **Vite + React** *(planned)*
+- Solidity `0.8.28`
+- Hardhat `3`
+- ethers-based Hardhat toolbox
+- OpenZeppelin Contracts
+- Mocha / Chai
+- Node.js
 
 ---
 
-## Current Folder Structure
+## Current Structure
 
 ```text
 krabidEx/
@@ -54,21 +98,16 @@ krabidEx/
 ├── README.md
 └── backend/
     ├── package.json
-    └── package-lock.json
+    ├── package-lock.json
+    ├── hardhat.config.ts
+    ├── tsconfig.json
+    ├── contracts/
+    │   ├── Token.sol
+    │   └── Exchange.sol
+    └── test/
+        ├── Token.js
+        └── Exchange.js
 ```
-
----
-
-## Roadmap
-
-- [ ] Initialize Hardhat project structure inside `backend/`
-- [ ] Add ERC-20 token contract
-- [ ] Add transfer / approval / allowance tests
-- [ ] Add exchange contract
-- [ ] Add deposit / withdraw flows
-- [ ] Add Ignition deployment modules
-- [ ] Connect frontend wallet
-- [ ] Prepare testnet deployment
 
 ---
 
@@ -81,33 +120,47 @@ git clone git@github.com:kablima/krabidEx.git
 cd krabidEx
 ```
 
-Backend setup:
+Install backend dependencies:
 
 ```bash
 cd backend
 npm install
 ```
 
-When Hardhat scaffold and tests are ready:
+Run tests:
 
 ```bash
 npx hardhat test
 ```
 
+Or:
+
+```bash
+npm test
+```
+
 ---
 
-## Build Philosophy
+## Roadmap
 
-`krabidEx` is being built in public, from the ground up, with the goal of becoming a real portfolio-grade Web3 project rather than a fake polished shell.
+### Done
 
-This repo will show the actual progression:
+- [x] Initialize backend project
+- [x] Configure Hardhat 3
+- [x] Add ERC-20 token contract
+- [x] Add token tests
+- [x] Add exchange contract skeleton with deposit / withdraw core
+- [x] Add exchange tests
 
-- setup
-- mistakes
-- fixes
-- contract logic
-- testing
-- integration
+### Next
+
+- [ ] Add stronger event and revert-path test coverage
+- [ ] Add order-book / trading logic
+- [ ] Add fee application logic
+- [ ] Add deployment workflow
+- [ ] Add frontend integration
+- [ ] Add wallet connection
+- [ ] Prepare public testnet deployment
 
 ---
 
@@ -119,5 +172,5 @@ This repo will show the actual progression:
 
 ## License
 
-This project is licensed under the **MIT License**.  
+This repository is licensed under the **MIT License**.  
 See the [LICENSE](./LICENSE) file for details.
