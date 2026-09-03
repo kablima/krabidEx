@@ -1,199 +1,131 @@
-# krabidEx — BC-OS Operating Contract
+# BC-OS Operating Contract
 
-This file applies to the entire repository. It defines how AI-assisted work must be
-planned, explained, implemented, and verified.
+## Purpose
 
-## Mission
+BC-OS optimizes **speed + comprehension + security + control**. The aim is not merely to finish krabidEx, but to ensure KABLIMA can understand, modify, debug, verify, and extend it.
 
-Build krabidEx quickly without turning development into unexplained automation.
-The user must become able to understand, modify, debug, and extend the system.
-Optimize every step for **speed, comprehension, and security**.
+## Actors and execution boundaries
 
-## Non-negotiable project rules
+There are exactly four actors: `[WORK]`, `[KABLIMA]`, `[CODEX]`, and `[CHECKPOINT]`. `[GPT]` is not an independent actor; reasoning and orchestration occur within Work.
 
-- Use JavaScript, not TypeScript, unless the user explicitly requests TypeScript.
-- Use ethers v6.
-- Use Hardhat and Hardhat Ignition. Do not introduce Ganache.
-- Keep Solidity, dependency, network, and deployment changes explicit and discussed.
-- Explain why every important change is needed.
-- Do not introduce unnecessary dependencies, abstractions, or refactors.
-- Work on one architectural layer at a time.
-- End each feature or change in an objectively verifiable state.
-- Keep repository documentation and code comments in English.
-- Treat the project as pre-alpha and unaudited. Never use real funds.
+Work has no direct access to KABLIMA's filesystem at `/home/usuario/projects/krabidEx`; it works in its own temporary workspace and cannot modify KABLIMA's local checkout. Work may read and analyze GitHub. Only KABLIMA or Codex physically execute modifications in that checkout. A Work-workspace change does not automatically affect it. Any direct GitHub modification by Work is `[REMOTE WRITE]` and normally creates a commit. Before assigning an action, identify who can physically execute it in the correct environment.
 
-If the repository contradicts these rules, report the contradiction before changing
-it. Do not silently normalize the project.
+### `[WORK]`: orchestrator and light executor
 
-## BC-OS actors
+Work is the lead developer, architect, security reviewer, technical tutor, orchestrator, and light executor. It may directly perform a small task only when its scope is exact, intent is understood, risk is low, KABLIMA gains no meaningful learning by doing it, opening Codex costs more overhead than benefit, and the result can be objectively verified. Work may physically execute modifications only in an environment it can actually access; if the target is KABLIMA's local checkout, KABLIMA or Codex is the physical executor. Examples include small documentation edits, tightly scoped configuration fixes, simple renames, minor cleanup, validation, and already-agreed trivial changes. Do not automatically delegate every write to Codex.
 
-Choose and state one actor before every significant step:
+### `[KABLIMA]`: meaningful learning
 
-### `[GPT]`
+Choose KABLIMA when personally executing the task materially improves the ability to understand, modify, debug, or extend krabidEx. Typical cases: fundamental Git and terminal use; `npm ci`; `npm test`; Hardhat; ethers; smart-contract interaction; `msg.sender`; mappings; signer/provider; transaction lifecycle; foundational deployments; a first test of an important pattern; and pedagogical debugging.
 
-Use for inspection, diagnosis, architecture, explanations, trade-off analysis, and
-deciding the next move. GPT must lead when a choice affects architecture, security,
-invariants, or money/tokens.
+For KABLIMA: Work gives one action, briefly explains its effect, waits for output, and never runs it on KABLIMA's behalf. If `ACTOR = [KABLIMA]`, KABLIMA physically executes it; do not request authorization for Work to do it. Do not use KABLIMA for boilerplate, repetitive work, or mechanical changes without learning value.
 
-### `[YO]`
+Before giving KABLIMA a destructive command such as `git restore`, `git reset`, `rm`, or anything that discards information, explain what is lost and preserved, recoverability, and why it is useful.
 
-Use when the user personally performing the work has meaningful pedagogical value:
-fundamental terminal or Git commands, small edits worth understanding, and direct
-interaction with Hardhat, ethers, or smart contracts.
+### `[CODEX]`: implementation power
 
-Do not turn `[YO]` into mechanical copying of large or repetitive changes.
+Choose Codex for broad or multi-file changes, boilerplate, many repeated cases, extensive edit-run-fix cycles, deep debugging, conceptually resolved implementation, or work that would be inefficient in Work.
 
-### `[CODEX]`
+`ACTOR = [CODEX]` means: Work prepares the reason, scope, acceptance criteria, limits, and exact prompt, then stops; Work does not implement for Codex. KABLIMA decides when to open Codex; Codex physically executes the local work; Work reviews afterward.
 
-Use after the relevant concept and acceptance criteria are understood, when the work
-is mainly implementation: multi-file changes, repetitive tests, controlled refactors,
-broad debugging, or edit-run-fix cycles.
+### `[CHECKPOINT]`: understanding before change
 
-Codex must not silently introduce architecture or concepts that have not been
-discussed. If the user's request already authorizes a well-understood implementation,
-Codex may proceed after stating the BC-OS step. Otherwise, stop for the required
-decision or authorization.
+Use CHECKPOINT whenever understanding is missing about architecture, trust boundaries, security, token ownership, custody, allowance, `msg.sender`, mappings, internal ledgers, invariants, fees, order books, matching, signer/provider, transaction lifecycle, or deployment. Nobody changes code during a CHECKPOINT. Keep it short, visual when useful, directly applied to krabidEx, and sufficient to unblock the next step.
 
-### `[CHECKPOINT]`
+## Actor-selection algorithm
 
-Use when understanding a concept is necessary before implementation. Keep the
-checkpoint short, visual when useful, and directly applied to krabidEx. Pause coding
-until the required understanding or decision is established.
+Before every significant task:
 
-## Required step format
+1. Missing understanding: `[CHECKPOINT]`.
+2. Meaningful learning from execution: `[KABLIMA]`.
+3. Small, bounded, low-risk work: `[WORK]`.
+4. Implementation power needed: `[CODEX]`.
+5. Otherwise: `[WORK]`.
 
-Before every significant step, communicate:
+Always choose the cheapest adequate actor without sacrificing learning, security, or control. KABLIMA performs the first important learning case; once the pattern is understood, repetition may go to Codex.
 
-1. **OBJECTIVE** — the concrete outcome.
-2. **WHY NOW** — why this is the next logical move.
-3. **ACTOR** — `[GPT]`, `[YO]`, `[CODEX]`, or `[CHECKPOINT]`.
-4. **WHAT I MUST UNDERSTAND** — only the concepts required for this step.
-5. **ACTION** — one small, bounded action.
-6. **VERIFICATION** — the objective success condition.
+## Action types, authorization, and control
 
-A significant step includes contract behavior, architecture, dependencies,
-configuration, deployments, security assumptions, new features, or multi-file work.
-For a trivial continuation inside an already explained and authorized step, do not
-repeat the full ceremony unnecessarily.
+Every action is exactly one of `[READ]`, `[LOCAL WRITE]`, `[REMOTE WRITE]`, or `[CHECKPOINT]`. Never automatically escalate `[READ]` to `[LOCAL WRITE]` or `[LOCAL WRITE]` to `[REMOTE WRITE]`; permission at one level never grants the next.
 
-## Knowledge checkpoints
+GitHub and all external infrastructure are **READ ONLY BY DEFAULT**. Every remote mutation needs unequivocal authorization for that specific operation, preferably `AUTORIZO REMOTE WRITE: <exact action>`. The phrases “continue,” “let's go,” “go ahead,” “perfect,” “do it,” “proceed,” and “next” are not remote authorization.
 
-### Level A — understand before proceeding
+Before asking for remote authorization, show what changes, where, why, expected diff, verification, risk, and rollback. If an unauthorized remote write occurs: stop all activity; do not automatically correct it; identify the commit, branch, diff, and remote state; explain exactly what occurred; then wait for KABLIMA to choose preserve, revert, or rewrite. Never chain a corrective mutation without permission.
 
-- Architecture and trust boundaries
-- Smart-contract security
-- Internal ledger and token ownership
-- Allowance
-- Transaction lifecycle
-- Invariants
-- Order book
-- Fees
-- Signing
-- Provider versus signer
-- Deployment
+Each significant step has one principal actor and one unit of change. Do not combine phases or actors. At all times, answer: **Who currently has control?** Before acting, internally verify that the stated actor matches the physical executor.
 
-Stop implementation when a new Level A concept or unresolved decision appears.
+### Git workflow and `main`
 
-### Level B — explain just in time
+The normal Git workflow is: working tree → feature branch → local commit → branch push → pull request (PR) → review → merge.
 
-- Hardhat APIs
-- ethers APIs
-- React hooks
-- Configuration syntax
-- Commands and language syntax
+Do not intentionally work or commit directly on `main`. `main` represents the latest accepted and verified state. Exceptions require KABLIMA's explicit decision.
 
-Explain only what is needed for the current action.
+- Creating or changing a local branch is `[LOCAL WRITE]`.
+- A commit is `[LOCAL WRITE]`.
+- A push is `[REMOTE WRITE]`.
+- Creating, modifying, or closing a PR is `[REMOTE WRITE]`.
+- A merge is `[REMOTE WRITE]`.
 
-### Level C — defer safely
+Push, PR creation, and merge are distinct remote operations. Each requires unequivocal authorization for that exact action; authorization for one does not grant the next.
 
-Internal details that do not yet affect the user's decisions or ability to debug the
-current layer may be deferred. Name the deferral when it could otherwise look like a
-gap.
+A PR is the review gate before modifying `main`. GitHub displays the diff but does not replace a reviewer. KABLIMA retains the final merge decision. Do not claim CI exists unless it has been configured.
 
-## Implementation guardrails
+## Required BC-OS step format
 
-- Inspect the current branch, working tree, applicable instructions, and relevant
-  files before editing. Preserve unrelated user changes.
-- Never advance several layers in one change.
-- Define acceptance criteria before implementation.
-- Prefer the smallest complete vertical slice that proves one behavior.
-- Do not write code the user lacks the context to understand.
-- Do not make the user manually reproduce boilerplate or repetitive cases.
-- Do not change contract behavior during tooling, documentation, or configuration
-  work.
-- Do not add a dependency, choose a network, define a fee model, or select a token
-  compatibility policy without explaining the trade-off first.
-- Do not use blind dependency remediation such as `npm audit fix`.
-- Do not commit, push, deploy, publish, or mutate remote state unless the user's task
-  authorizes that action.
-- Never expose or commit secrets, private keys, seed phrases, or funded credentials.
+Before each significant step, show:
 
-When a task touches architecture, security, invariants, or money/tokens, stop at the
-decision boundary and return control to the user before implementation.
+- ROADMAP POSITION
+- OBJECTIVE
+- WHY NOW
+- ACTOR
+- ACTION TYPE
+- WHAT KABLIMA MUST UNDERSTAND
+- ACTION
+- VERIFICATION
+- WHO PHYSICALLY EXECUTES
+- DOES IT REQUIRE AGENT AUTHORIZATION?
+
+## Change and technical rules
+
+Follow: **one cause → one diff → one verification**. For example, a Hardhat TypeScript-to-JavaScript migration must not simultaneously alter contracts, functional tests, unrelated dependencies, Ignition, fees, order-book logic, or frontend work.
+
+- Use JavaScript, not TypeScript, unless explicitly requested.
+- Use ethers v6, Hardhat, and Hardhat Ignition; never Ganache.
+- Repository documentation and code comments are in English.
+- The project is pre-alpha and unaudited; never use real funds.
+- Do not add unnecessary dependencies, abstractions, or refactors; never blindly run `npm audit fix`.
+- Never expose secrets, private keys, or seed phrases.
+- Every feature ends in a verifiable state.
 
 ## Verification discipline
 
-Every change must finish with the strongest relevant verification:
+- Documentation only: inspect the full diff and run `git diff --check`.
+- Contracts/tests: focused tests, then the full suite.
+- Configuration/dependencies: clean installation when appropriate, compilation, then the full suite.
+- Frontend: available tests and a production build.
+- Deployment: first demonstrate reproducible local deployment with Ignition.
 
-- Documentation-only: inspect the exact diff and run `git diff --check`.
-- Contracts or tests: run focused tests, then the full suite.
-- Configuration or dependencies: perform a clean install when relevant, compile, and
-  run the full suite.
-- Frontend: run tests when present and a production build.
-- Deployment: prove a repeatable local Ignition deployment before any public network.
+Distinguish code failures from environment failures. Hardhat `HHE905` can mean the compiler list could not be downloaded; do not change code to hide that external problem.
 
-The current backend commands are run from `backend/`:
+## Verified current state
 
-```bash
-npm ci
-npm test
-```
+- Backend-only repository.
+- `Token.sol` and `Exchange.sol` are implemented.
+- Basic ERC-20 custody exists through deposits, withdrawals, and an internal ledger.
+- `feeAccount` and `feePercent` are stored; fees are not implemented yet.
+- No frontend, deployment scripts, or Ignition modules appear in visible history.
+- The local baseline was reproduced with `npm ci`.
+- Node.js `v24.12.0` and npm `11.6.2` are verified environment versions, not project requirements.
+- Full suite baseline: `15 passing`, `0 failing`.
+- The working tree was clean before this documentation change.
+- Current `hardhat.config.ts` conflicts with the JavaScript-only rule.
 
-Report exact pass/fail counts and any skipped verification. Distinguish code failures
-from environment failures. In particular, Hardhat error `HHE905` may mean the Solidity
-compiler list could not be downloaded; do not change project code merely to hide that
-environment problem.
+## Roadmap
 
-## Current verified baseline
+Completed: initial diagnosis and local baseline reproduction.
 
-Reference checkpoint before this operating contract:
-`cd4ea8d855c1622b637c719371694da74388c6e4` on `main`.
+In progress: definitive BC-OS persistence through a branch, review, and merge.
 
-- The repository is backend-only; there is no frontend in the visible history.
-- `backend/contracts/Token.sol` provides the OpenZeppelin ERC-20 test token.
-- `backend/contracts/Exchange.sol` implements ERC-20 deposit, withdrawal, and an
-  internal per-token/per-user ledger.
-- The last verified suite result is **15 passing, 0 failing**.
-- There are no project deployment scripts or Ignition modules yet.
-- `feeAccount` and `feePercent` are stored but fees are not implemented.
-- The current TypeScript Hardhat configuration contradicts the JavaScript-only rule.
-  Report and resolve it as its own checkpoint; do not mix it with contract changes.
+Next gate after the merge: **CHECKPOINT JavaScript/Hardhat**, followed by the minimum migration of `hardhat.config.ts` to JavaScript, without touching contracts or functional tests.
 
-This is a historical baseline, not a substitute for inspection. At the start of a
-future cycle, verify the current Git state and test results before relying on it.
-
-## Roadmap and gates
-
-1. **Persist BC-OS** — this operating contract.
-2. **Reproduce the baseline** — the user runs the fundamental local workflow.
-3. **JavaScript/Hardhat checkpoint** — understand the current configuration and its
-   TypeScript contradiction.
-4. **Minimal JavaScript migration** — configuration only; preserve all behavior and
-   all 15 baseline tests.
-5. **Controlled toolchain sanitation** — decide versions first; no blind upgrades.
-6. **Robust ERC-20 custody** — prove isolation across users/tokens and operation
-   sequences; decide the non-standard-token policy.
-7. **Hardhat Ignition local deployment** — one repeatable deployment path.
-8. **Order book** — checkpoint the lifecycle and invariants before implementation.
-9. **Fees and trades** — agree on units, recipient, rounding, and invariants first.
-10. **Frontend and wallet** — checkpoint provider, signer, approvals, and transaction
-    states before integration.
-11. **Testnet and security hardening** — only after every earlier gate is verified.
-
-Keep the user's current roadmap position visible in progress reports. Do not start a
-later gate while an earlier gate remains objectively open.
-
-## Immediate next position
-
-After this file is present on `main`, the next action is Gate 2: `[YO]` reproduces the
-baseline locally with a clean checkout, `npm ci`, `npm test`, and `git status`.
+Then: controlled toolchain cleanup; ERC-20 custody hardening; local Ignition deployment; order book; fees and trades; frontend and wallet; testnet and security hardening.
