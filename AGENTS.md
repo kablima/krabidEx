@@ -4,6 +4,8 @@
 
 BC-OS optimizes **speed + comprehension + security + control**. The aim is not merely to finish krabidEx, but to ensure KABLIMA can understand, modify, debug, verify, and extend it.
 
+A governing meta-rule applies at all times: **Meta-work must end once it stops increasing shipping velocity.** Process exists to improve shipping, not to become the work itself.
+
 ## Actors and execution boundaries
 
 There are exactly four actors: `[WORK]`, `[KABLIMA]`, `[CODEX]`, and `[CHECKPOINT]`. `[GPT]` is not an independent actor; reasoning and orchestration occur within Work.
@@ -48,27 +50,51 @@ Always choose the cheapest adequate actor without sacrificing learning, security
 
 Every action is exactly one of `[READ]`, `[LOCAL WRITE]`, `[REMOTE WRITE]`, or `[CHECKPOINT]`. Never automatically escalate `[READ]` to `[LOCAL WRITE]` or `[LOCAL WRITE]` to `[REMOTE WRITE]`; permission at one level never grants the next.
 
-GitHub and all external infrastructure are **READ ONLY BY DEFAULT**. Every remote mutation needs unequivocal authorization for that specific operation, preferably `AUTORIZO REMOTE WRITE: <exact action>`. The phrases “continue,” “let's go,” “go ahead,” “perfect,” “do it,” “proceed,” and “next” are not remote authorization.
+GitHub and all external infrastructure are **READ ONLY BY DEFAULT**. Remote mutations require unequivocal KABLIMA authorization. Authorization may be either a single-operation authorization or, when FAST LANE applies, the bundled authorization `SHIP: <branch>` defined below. The phrases “continue,” “let's go,” “go ahead,” “perfect,” “do it,” “proceed,” and “next” are not remote authorization.
 
 Before asking for remote authorization, show what changes, where, why, expected diff, verification, risk, and rollback. If an unauthorized remote write occurs: stop all activity; do not automatically correct it; identify the commit, branch, diff, and remote state; explain exactly what occurred; then wait for KABLIMA to choose preserve, revert, or rewrite. Never chain a corrective mutation without permission.
 
-Each significant step has one principal actor and one unit of change. Do not combine phases or actors. At all times, answer: **Who currently has control?** Before acting, internally verify that the stated actor matches the physical executor.
+Each significant step has one principal actor and one unit of change. Do not combine unrelated changes. At all times, answer: **Who currently has control?** Before acting, internally verify that the stated actor matches the physical executor.
 
-### Git workflow and `main`
+## Git workflow and shipping lanes
 
-The normal Git workflow is: working tree → feature branch → local commit → branch push → pull request (PR) → review → merge.
+Do not intentionally develop directly on `main`. `main` represents the latest accepted and verified state. Normal work begins on a dedicated local branch.
 
-Do not intentionally work or commit directly on `main`. `main` represents the latest accepted and verified state. Exceptions require KABLIMA's explicit decision.
+BC-OS uses two shipping lanes. Choose the fastest lane that preserves the required level of safety.
 
-- Creating or changing a local branch is `[LOCAL WRITE]`.
-- A commit is `[LOCAL WRITE]`.
-- A push is `[REMOTE WRITE]`.
-- Creating, modifying, or closing a PR is `[REMOTE WRITE]`.
-- A merge is `[REMOTE WRITE]`.
+### FAST LANE
 
-Push, PR creation, and merge are distinct remote operations. Each requires unequivocal authorization for that exact action; authorization for one does not grant the next.
+Use FAST LANE for low-risk, non-security-critical changes whose scope is already understood and objectively verifiable. Typical examples include documentation, configuration cleanup, dependency cleanup that does not alter intended runtime behavior, renames, formatting, mechanical refactors, and other small isolated maintenance changes.
 
-A PR is the review gate before modifying `main`. GitHub displays the diff but does not replace a reviewer. KABLIMA retains the final merge decision. Do not claim CI exists unless it has been configured.
+FAST LANE flow:
+
+`local branch → implementation → local verification → KABLIMA review → local commit → SHIP authorization → push → PR → remote verification → merge → local main sync`
+
+The command phrase `SHIP: <branch>` is an explicit bundled authorization for the approved branch and current reviewed commit. It authorizes, as one shipping operation, branch push, PR creation, remote diff/head verification, merge, and local `main` synchronization. Separate approvals for push, PR, and merge are not required inside that bundle.
+
+FAST LANE may proceed only if all of the following remain true:
+
+- the reviewed commit SHA has not changed;
+- the working tree is clean;
+- the remote diff matches the locally approved scope;
+- no unexpected commits or files appear;
+- there are no merge conflicts;
+- required local verification has passed;
+- no new uncertainty appears about security, funds, custody, invariants, or critical architecture.
+
+If any FAST LANE condition fails, stop immediately and return control to KABLIMA. Do not repair, rewrite, rebase, force-push, merge, or expand scope automatically.
+
+### SECURE LANE
+
+Use SECURE LANE for Solidity contract logic, custody, balances, allowances, invariants, fees, order books, trade execution, authentication/authorization, deployment, upgradeability, signing, secrets, anything that can affect funds, and any change with meaningful security or architectural risk.
+
+SECURE LANE flow remains deliberately gated:
+
+`local branch → implementation → focused verification → full verification → KABLIMA review → commit → push authorization → PR authorization → review → merge authorization → local main sync`
+
+In SECURE LANE, push, PR creation, and merge are distinct `[REMOTE WRITE]` operations and require separate unequivocal authorization. A PR is the review gate before modifying `main`. GitHub displays the diff but does not replace a reviewer. KABLIMA retains the final merge decision. Do not claim CI exists unless it has been configured.
+
+Creating or changing a local branch is `[LOCAL WRITE]`. A commit is `[LOCAL WRITE]`. Push, PR creation, PR mutation, and merge are `[REMOTE WRITE]`.
 
 ## Required BC-OS step format
 
@@ -84,6 +110,9 @@ Before each significant step, show:
 - VERIFICATION
 - WHO PHYSICALLY EXECUTES
 - DOES IT REQUIRE AGENT AUTHORIZATION?
+- SHIPPING LANE: FAST or SECURE
+
+Do not mechanically expand this format for trivial follow-ups when doing so adds more process than clarity. Keep the structure compact enough to preserve momentum.
 
 ## Change and technical rules
 
@@ -117,15 +146,12 @@ Distinguish code failures from environment failures. Hardhat `HHE905` can mean t
 - The local baseline was reproduced with `npm ci`.
 - Node.js `v24.12.0` and npm `11.6.2` are verified environment versions, not project requirements.
 - Full suite baseline: `15 passing`, `0 failing`.
-- The working tree was clean before this documentation change.
-- Current `hardhat.config.ts` conflicts with the JavaScript-only rule.
+- `hardhat.config.js` is the accepted Hardhat configuration on `main`.
 
 ## Roadmap
 
-Completed: initial diagnosis and local baseline reproduction.
+Completed: initial diagnosis, baseline reproduction, BC-OS persistence, and migration of Hardhat configuration to JavaScript.
 
-In progress: definitive BC-OS persistence through a branch, review, and merge.
+In progress: controlled toolchain cleanup.
 
-Next gate after the merge: **CHECKPOINT JavaScript/Hardhat**, followed by the minimum migration of `hardhat.config.ts` to JavaScript, without touching contracts or functional tests.
-
-Then: controlled toolchain cleanup; ERC-20 custody hardening; local Ignition deployment; order book; fees and trades; frontend and wallet; testnet and security hardening.
+Then: ERC-20 custody hardening; local Ignition deployment; order book; fees and trades; frontend and wallet; testnet and security hardening.
